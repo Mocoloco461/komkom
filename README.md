@@ -11,7 +11,7 @@
 
 ### התקנה
 ```bash
-# שמרו את קובץ ההתקנה כ-install_komkom.sh
+git clone https://github.com/Mocoloco461/komkom
 chmod +x install_komkom.sh
 ./install_komkom.sh
 ```
