@@ -7,7 +7,7 @@ Komkom היא אפליקציית קומקום לשורת הפקודה שמביא
 
 ## 🔧 התקנה
 
-```bash
+bash
 npm install -g komkom
 # או, אם אתה אנין טעם:
 brew install komkom
