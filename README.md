@@ -1,6 +1,6 @@
-# 🫖 Komkom - כלי הקומקום לשורת הפקודה
+# ☕ Komkom - כלי הקומקום לשורת הפקודה
 
-כלי מעליזי לשורת הפקודה שמסמיל תהליך הכנת תה עם אנימציות ASCII ומעקב מצב.
+כלי מעליזי לשורת הפקודה שמסמיל תהליך הכנת קפה עם אנימציות ASCII ומעקב מצב.
 
 ## 🚀 התקנה
 
@@ -12,8 +12,8 @@
 ### התקנה
 ```bash
 git clone https://github.com/Mocoloco461/komkom
-chmod +x install_komkom.sh
-./install_komkom.sh
+chmod +x install.sh
+./install.sh
 ```
 
 אם הכלי לא מזוהה, הוסיפו ל-`~/.bashrc`:
@@ -35,6 +35,14 @@ komkom empty        # ריקון
 komkom help         # עזרה
 ```
 
+## 🗑️ הסרת התקנה
+
+למחיקת הכלי מהמחשב:
+```bash
+chmod +x uninstall.sh
+./uninstall.sh
+```
+
 ### תהליך מלא
 ```bash
 komkom pull water
@@ -53,4 +61,4 @@ komkom sip
 
 ---
 
-☕ **תהנו מהתה הווירטואלי!**
+☕ **תהנו מהקפה הווירטואלי!**

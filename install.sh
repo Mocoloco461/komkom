@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Komkom Installer - English Version
-# Command line kettle tool installation
+# Command line coffee maker tool installation
 
 set -e
 
@@ -9,7 +9,7 @@ INSTALL_DIR="/usr/local/bin"
 SCRIPT_NAME="komkom"
 CONFIG_DIR="$HOME/.komkom"
 
-echo "🫖 Starting Komkom installation..."
+echo "☕ Starting Komkom installation..."
 
 # Check permissions
 if [[ $EUID -eq 0 ]]; then
@@ -24,14 +24,15 @@ mkdir -p "$CONFIG_DIR"
 cat > "/tmp/$SCRIPT_NAME" << 'EOF'
 #!/bin/bash
 
-# Komkom - Command Line Kettle Tool
-# Version 1.0.0
+# Komkom - Command Line Coffee Maker Tool
+# Version 2.0.0
 
 CONFIG_DIR="$HOME/.komkom"
 STATE_FILE="$CONFIG_DIR/state.json"
 
 # Initialize state file
 init_state() {
+    mkdir -p "$CONFIG_DIR"
     if [[ ! -f "$STATE_FILE" ]]; then
         cat > "$STATE_FILE" << 'JSON'
 {
@@ -39,10 +40,26 @@ init_state() {
     "temperature": 20,
     "is_boiling": false,
     "last_sip": "",
-    "daily_tea_count": 0,
+    "daily_coffee_count": 0,
     "mood": "waiting"
 }
 JSON
+    else
+        # Migrate old tea_count to coffee_count for backward compatibility
+        if grep -q "daily_tea_count" "$STATE_FILE" 2>/dev/null; then
+            python3 -c "
+import json
+try:
+    with open('$STATE_FILE', 'r') as f:
+        data = json.load(f)
+    if 'daily_tea_count' in data:
+        data['daily_coffee_count'] = data.pop('daily_tea_count')
+        with open('$STATE_FILE', 'w') as f:
+            json.dump(data, f, indent=2)
+except:
+    pass
+" 2>/dev/null || true
+        fi
     fi
 }
 
@@ -73,55 +90,78 @@ with open('$STATE_FILE', 'w') as f:
 
 # Water filling animation
 animate_filling() {
-    echo "💧 Filling with water..."
+    echo -e "\033[1;36m💧 Filling with water...\033[0m"
     local frames=(
-        "┌─────────────────────────┐\n│                         │\n│                         │\n│                         │\n│                         │\n└─────────────────────────┘"
-        "┌─────────────────────────┐\n│                         │\n│                         │\n│                         │\n│ ~~~~~~~~~~~~~~~~~~~     │\n└─────────────────────────┘"
-        "┌─────────────────────────┐\n│                         │\n│                         │\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n└─────────────────────────┘"
-        "┌─────────────────────────┐\n│                         │\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n└─────────────────────────┘"
-        "┌─────────────────────────┐\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n│ ~~~~~~~~~~~~~~~~~~~     │\n└─────────────────────────┘"
+        "┌─────────────────────────┐\n│                         │\n│                         │\n│                         │\n│                         │\n│                         │\n└─────────────────────────┘\n\033[2mFilling: 0%\033[0m"
+        "┌─────────────────────────┐\n│                         │\n│                         │\n│                         │\n│                         │\n│ \033[1;34m💧💧💧💧💧💧💧\033[0m           │\n└─────────────────────────┘\n\033[2mFilling: 20%\033[0m"
+        "┌─────────────────────────┐\n│                         │\n│                         │\n│                         │\n│ \033[1;34m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;34m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n└─────────────────────────┘\n\033[2mFilling: 40%\033[0m"
+        "┌─────────────────────────┐\n│                         │\n│                         │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n└─────────────────────────┘\n\033[2mFilling: 60%\033[0m"
+        "┌─────────────────────────┐\n│                         │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n└─────────────────────────┘\n\033[2mFilling: 80%\033[0m"
+        "┌─────────────────────────┐\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n│ \033[1;36m≈≈≈≈≈≈≈≈≈≈≈≈≈≈≈\033[0m      │\n└─────────────────────────┘\n\033[2mFilling: 100%\033[0m"
     )
     
     for frame in "${frames[@]}"; do
         clear
+        echo -e "☕ \033[1mCoffee Maker\033[0m\n"
         echo -e "$frame"
-        sleep 0.3
+        sleep 0.25
     done
     
-    echo "✅ Kettle is full!"
+    echo ""
+    echo -e "\033[1;32m✅ Water reservoir is full!\033[0m"
     update_state "water_level" "100"
     update_state "mood" "ready"
 }
 
 # Boiling animation
 animate_boiling() {
-    echo "🔥 Boiling water..."
+    echo -e "\033[1;31m🔥 Heating water...\033[0m"
     local temp=20
     
     while [[ $temp -lt 100 ]]; do
         clear
-        echo "🫖 Kettle heating up..."
-        echo "🌡️  Temperature: ${temp}°C"
+        echo -e "☕ \033[1mCoffee Maker\033[0m"
+        echo ""
+        echo -e "\033[1;33m🔥 Heating up...\033[0m"
         
-        # Bubble animation
-        case $((temp % 4)) in
-            0) echo "     .  .  .     " ;;
-            1) echo "   .  o  .  o    " ;;
-            2) echo "  o  .  O  .  o  " ;;
-            3) echo " .  O  .  O  .   " ;;
+        # Progress bar
+        local progress=$((temp * 40 / 100))
+        local bar=""
+        for ((i=0; i<progress; i++)); do bar+="█"; done
+        for ((i=progress; i<40; i++)); do bar+="░"; done
+        echo -e "[\033[1;31m$bar\033[0m]"
+        
+        echo -e "\033[1;36m🌡️  Temperature: ${temp}°C / 100°C\033[0m"
+        echo ""
+        
+        # Enhanced bubble animation with colors
+        case $((temp % 8)) in
+            0) echo -e "          \033[2m.\033[0m  \033[2m.\033[0m  \033[2m.\033[0m     " ;;
+            1) echo -e "        \033[2m.\033[0m  \033[1;36mo\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m    " ;;
+            2) echo -e "       \033[1;36mo\033[0m  \033[2m.\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m  " ;;
+            3) echo -e "      \033[2m.\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m   " ;;
+            4) echo -e "     \033[1;36mo\033[0m  \033[2m.\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m  \033[2m.\033[0m" ;;
+            5) echo -e "      \033[1;37mO\033[0m  \033[1;36mo\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m  \033[1;37mO\033[0m   " ;;
+            6) echo -e "     \033[2m.\033[0m  \033[1;37mO\033[0m  \033[1;36mo\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m" ;;
+            7) echo -e "      \033[1;36mo\033[0m  \033[2m.\033[0m  \033[1;37mO\033[0m  \033[2m.\033[0m  \033[1;36mo\033[0m   " ;;
         esac
         
-        sleep 0.1
-        temp=$((temp + 5))
+        sleep 0.08
+        temp=$((temp + 4))
         update_state "temperature" "$temp"
     done
     
-    # Steam animation
+    # Steam animation with colors
     clear
-    echo "💨 Water is boiling!"
-    for i in {1..5}; do
-        echo -e "\n    ~~~ ~~~~ ~~~"
-        sleep 0.2
+    echo -e "☕ \033[1mCoffee Maker\033[0m\n"
+    echo -e "\033[1;32m💨 Water is boiling!\033[0m"
+    for i in {1..6}; do
+        case $((i % 3)) in
+            0) echo -e "\n    \033[2m~~~ ~~~~ ~~~\033[0m" ;;
+            1) echo -e "\n   \033[2m~~~~ ~~~ ~~~~\033[0m" ;;
+            2) echo -e "\n    \033[2m~~ ~~~~ ~~\033[0m" ;;
+        esac
+        sleep 0.15
     done
     
     update_state "is_boiling" "true"
@@ -131,24 +171,28 @@ animate_boiling() {
 # Pouring animation
 animate_pouring() {
     local container="$1"
-    echo "🫗 Pouring into $container..."
+    echo -e "\033[1;33m☕ Pouring coffee into $container...\033[0m"
     
     local frames=(
-        "🫖     "
-        "🫖 \\   "
-        "🫖  \\  "
-        "🫖   \\ "
-        "🫖    \\"
+        "      ☕\n                  \n                  \n                  \n        $container"
+        "      ☕\n       \\\\          \n                  \n                  \n        $container"
+        "      ☕\n        \\\\         \n         \\\\        \n                  \n        $container"
+        "      ☕\n         \\\\        \n          \\\\       \n           \\\\      \n        ▓ $container"
+        "      ☕\n          \\\\       \n           \\\\      \n            \\\\     \n        ▓▓ $container"
+        "      ☕\n           \\\\      \n            \\\\     \n                  \n        ▓▓▓ $container"
+        "      ☕\n                  \n                  \n                  \n        ▓▓▓▓ $container"
     )
     
     for frame in "${frames[@]}"; do
         clear
-        echo "$frame"
-        echo "     ☕"
-        sleep 0.3
+        echo -e "☕ \033[1mCoffee Maker → Your $container\033[0m\n"
+        echo -e "$frame"
+        sleep 0.2
     done
     
-    echo "✅ Successfully poured into $container!"
+    echo ""
+    echo -e "\033[1;32m✅ Successfully poured fresh coffee into $container!\033[0m"
+    echo -e "\033[2m(Smells amazing!)\033[0m"
     update_state "mood" "satisfied"
 }
 
@@ -157,74 +201,113 @@ show_status() {
     local water_level=$(get_state "water_level")
     local temperature=$(get_state "temperature")
     local mood=$(get_state "mood")
-    local daily_count=$(get_state "daily_tea_count")
+    local daily_count=$(get_state "daily_coffee_count")
     
     clear
-    echo "┌─────────────────────────────────────┐"
-    echo "│           🫖 Kettle Status           │"
-    echo "├─────────────────────────────────────┤"
-    echo "│ Water Level: ${water_level}%                    │"
-    echo "│ Temperature: ${temperature}°C                   │"
-    echo "│ Cups of tea today: ${daily_count}              │"
-    echo "│ Mood: ${mood}                         │"
-    echo "├─────────────────────────────────────┤"
+    echo -e "\033[1;36m╔═════════════════════════════════════════╗\033[0m"
+    echo -e "\033[1;36m║\033[0m      \033[1mCoffee Maker Status\033[0m             \033[1;36m║\033[0m"
+    echo -e "\033[1;36m╠═════════════════════════════════════════╣\033[0m"
     
-    # ASCII art kettle based on mood
+    # Water level with color
+    local water_color="\033[1;31m"
+    if [ "$water_level" -gt 50 ]; then
+        water_color="\033[1;32m"
+    elif [ "$water_level" -gt 20 ]; then
+        water_color="\033[1;33m"
+    fi
+    echo -e "\033[1;36m║\033[0m 💧 Water Level: ${water_color}${water_level}%\033[0m                  \033[1;36m║\033[0m"
+    
+    # Temperature with color
+    local temp_color="\033[1;34m"
+    if [ "$temperature" -gt 80 ]; then
+        temp_color="\033[1;31m"
+    elif [ "$temperature" -gt 50 ]; then
+        temp_color="\033[1;33m"
+    fi
+    echo -e "\033[1;36m║\033[0m 🌡️  Temperature: ${temp_color}${temperature}°C\033[0m                \033[1;36m║\033[0m"
+    
+    echo -e "\033[1;36m║\033[0m ☕ Cups of coffee today: \033[1;35m${daily_count}\033[0m           \033[1;36m║\033[0m"
+    echo -e "\033[1;36m║\033[0m 😊 Mood: \033[1;33m${mood}\033[0m                        \033[1;36m║\033[0m"
+    echo -e "\033[1;36m╠═════════════════════════════════════════╣\033[0m"
+    
+    # ASCII art coffee maker based on mood
     case "$mood" in
         "waiting")
-            echo "│      🫖                             │"
-            echo "│    ( -.- )                          │"
+            echo -e "\033[1;36m║\033[0m           ☕                          \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         ( -.- )                       \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[2mWaiting for water...\033[0m            \033[1;36m║\033[0m"
             ;;
         "ready")
-            echo "│      🫖                             │"
-            echo "│    ( ^_^ )                          │"
+            echo -e "\033[1;36m║\033[0m           ☕                          \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         \033[1;32m( ^_^ )\033[0m                      \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[1;32mReady to brew!\033[0m                  \033[1;36m║\033[0m"
             ;;
         "excited")
-            echo "│      🫖💨                           │"
-            echo "│    ( ≧∇≦ )                          │"
+            echo -e "\033[1;36m║\033[0m           ☕💨                        \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         \033[1;33m( ≧∇≦ )\033[0m                     \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[1;33mBrewing hot coffee!\033[0m             \033[1;36m║\033[0m"
             ;;
         "satisfied")
-            echo "│      🫖                             │"
-            echo "│    ( ◡ ‿ ◡ )                        │"
+            echo -e "\033[1;36m║\033[0m           ☕                          \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         \033[1;35m( ◡ ‿ ◡ )\033[0m                    \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[1;35mCoffee served!\033[0m                  \033[1;36m║\033[0m"
             ;;
         "zen")
-            echo "│      🫖                             │"
-            echo "│    ( ˘ ³˘)                          │"
+            echo -e "\033[1;36m║\033[0m           ☕                          \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         \033[1;32m( ˘ ³˘)\033[0m                      \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[1;32mEnjoy your coffee!\033[0m              \033[1;36m║\033[0m"
             ;;
         "empty")
-            echo "│      🫖                             │"
-            echo "│    ( ._. )                          │"
+            echo -e "\033[1;36m║\033[0m           ☕                          \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m         \033[2m( ._. )\033[0m                      \033[1;36m║\033[0m"
+            echo -e "\033[1;36m║\033[0m    \033[2mEmpty... needs water\033[0m            \033[1;36m║\033[0m"
             ;;
     esac
     
-    echo "└─────────────────────────────────────┘"
+    echo -e "\033[1;36m╚═════════════════════════════════════════╝\033[0m"
 }
 
-# Tea sipping with inspirational quotes
-sip_tea() {
+# Coffee sipping with inspirational quotes
+sip_coffee() {
     local quotes=(
-        "Tea is liquid wisdom."
-        "A cup of tea is a cup of peace."
-        "Tea time is me time."
-        "Keep calm and drink tea."
-        "Good tea = good code."
-        "In tea we trust."
-        "Tea: because it's always five o'clock somewhere."
-        "Life is like tea - it's all about how you make it."
+        "Coffee is liquid creativity."
+        "A cup of coffee is a cup of productivity."
+        "Coffee time is code time."
+        "Keep calm and drink coffee."
+        "Good coffee = good code."
+        "In coffee we trust."
+        "Coffee: because adulting is hard."
+        "Life is like coffee - it's all about how you brew it."
+        "Coffee: the most important meal of the day."
+        "Behind every successful person is a substantial amount of coffee."
+        "Espresso yourself!"
+        "Decaf? Never heard of it."
     )
     
     local random_quote=${quotes[$RANDOM % ${#quotes[@]}]}
     
-    echo "☕ Sipping gently..."
-    sleep 1
-    echo "💭 \"$random_quote\""
-    sleep 2
+    echo -e "\033[1;33m☕ Sipping gently...\033[0m"
+    sleep 0.5
     
-    local current_count=$(get_state "daily_tea_count")
-    update_state "daily_tea_count" "$((current_count + 1))"
+    # Animated sipping
+    for i in {1..3}; do
+        echo -ne "\r  \033[1;36m◠◡◠\033[0m  "
+        sleep 0.3
+        echo -ne "\r  \033[1;36m◡◠◡\033[0m  "
+        sleep 0.3
+    done
+    echo ""
+    
+    sleep 0.5
+    echo -e "\n\033[1;35m💭 \"$random_quote\"\033[0m"
+    sleep 1.5
+    
+    local current_count=$(get_state "daily_coffee_count")
+    update_state "daily_coffee_count" "$((current_count + 1))"
     update_state "mood" "zen"
     
-    echo "😌 Ahh... exactly what I needed."
+    echo -e "\n\033[1;32m😌 Ahh... exactly what I needed.\033[0m"
+    echo -e "\033[2mEnergy level: ████████░░ 80%\033[0m"
 }
 
 # Main function
@@ -242,7 +325,7 @@ main() {
         "boil")
             local water_level=$(get_state "water_level")
             if [[ "$water_level" -eq 0 ]]; then
-                echo "❌ No water in kettle! Run: komkom pull water"
+                echo -e "\033[1;31m❌ No water in coffee maker! Run: komkom pull water\033[0m"
                 exit 1
             fi
             animate_boiling
@@ -251,7 +334,7 @@ main() {
             local container="${2:-cup}"
             local is_boiling=$(get_state "is_boiling")
             if [[ "$is_boiling" != "true" ]]; then
-                echo "❌ Water is not boiling! Run: komkom boil"
+                echo -e "\033[1;31m❌ Water is not hot enough! Run: komkom boil\033[0m"
                 exit 1
             fi
             
@@ -260,12 +343,13 @@ main() {
                     animate_pouring "$container"
                     ;;
                 "bathtub")
-                    echo "🚫 Management has decided to suspend you temporarily."
-                    echo "Reason: Attempted tea pouring into bathtub."
+                    echo -e "\033[1;31m🚫 Management has decided to suspend you temporarily.\033[0m"
+                    echo -e "\033[1;31mReason: Attempted coffee pouring into bathtub.\033[0m"
+                    echo -e "\033[1;31mCoffee is precious, don't waste it!\033[0m"
                     exit 1
                     ;;
                 *)
-                    echo "❌ Unsupported container. Try: cup, mug, or thermos"
+                    echo -e "\033[1;31m❌ Unsupported container. Try: cup, mug, or thermos\033[0m"
                     exit 1
                     ;;
             esac
@@ -274,31 +358,45 @@ main() {
             show_status
             ;;
         "empty")
-            echo "🚰 Emptying all water..."
-            sleep 1
+            echo -e "\033[1;33m🚰 Emptying water reservoir...\033[0m"
+            sleep 0.5
+            for i in {1..3}; do
+                echo -ne "\r  [\033[2m███░░░░░░░\033[0m] Draining...  "
+                sleep 0.2
+                echo -ne "\r  [\033[2m██████░░░░\033[0m] Draining...  "
+                sleep 0.2
+                echo -ne "\r  [\033[2m█████████░\033[0m] Draining...  "
+                sleep 0.2
+            done
+            echo -e "\r  [\033[1;32m██████████\033[0m] Complete!    "
             update_state "water_level" "0"
             update_state "temperature" "20"
             update_state "is_boiling" "false"
             update_state "mood" "empty"
-            echo "✅ Kettle is empty."
+            echo -e "\033[1;32m✅ Coffee maker is empty and clean.\033[0m"
             ;;
         "sip")
-            sip_tea
+            sip_coffee
             ;;
         "help"|"--help"|"-h")
-            echo "🫖 Komkom - Command Line Kettle Tool"
+            echo -e "\033[1;36m╔════════════════════════════════════════╗\033[0m"
+            echo -e "\033[1;36m║\033[0m  ☕ \033[1mKomkom - Coffee Maker Tool\033[0m      \033[1;36m║\033[0m"
+            echo -e "\033[1;36m╚════════════════════════════════════════╝\033[0m"
             echo ""
-            echo "Usage:"
-            echo "  komkom pull water     - Fill with water"
-            echo "  komkom boil          - Boil water"
-            echo "  komkom pour [vessel] - Pour into vessel (cup/mug/thermos)"
-            echo "  komkom status        - Show current status"
-            echo "  komkom empty         - Empty kettle"
-            echo "  komkom sip           - Sip tea"
-            echo "  komkom help          - Show help"
+            echo -e "\033[1mUsage:\033[0m"
+            echo -e "  \033[1;33mkomkom pull water\033[0m      - Fill with water"
+            echo -e "  \033[1;33mkomkom boil\033[0m           - Heat water for coffee"
+            echo -e "  \033[1;33mkomkom pour [vessel]\033[0m  - Pour coffee (cup/mug/thermos)"
+            echo -e "  \033[1;33mkomkom status\033[0m         - Show current status"
+            echo -e "  \033[1;33mkomkom empty\033[0m          - Empty coffee maker"
+            echo -e "  \033[1;33mkomkom sip\033[0m            - Sip your coffee ☕"
+            echo -e "  \033[1;33mkomkom help\033[0m           - Show this help"
+            echo ""
+            echo -e "\033[2mExample workflow:\033[0m"
+            echo -e "\033[2m  komkom pull water → komkom boil → komkom pour mug → komkom sip\033[0m"
             ;;
         *)
-            echo "❌ Unknown command. Run: komkom help"
+            echo -e "\033[1;31m❌ Unknown command.\033[0m Run: \033[1;33mkomkom help\033[0m"
             exit 1
             ;;
     esac
@@ -312,13 +410,13 @@ echo "📋 Copying files..."
 sudo cp "/tmp/$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
 sudo chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
 
-echo "✅ Komkom updated to English successfully!"
+echo "✅ Komkom coffee maker installed successfully!"
 echo ""
-echo "🚀 Start with:"
+echo "🚀 Start brewing with:"
 echo "  komkom help"
 echo "  komkom pull water"
 echo "  komkom boil"
 echo "  komkom pour mug"
 echo "  komkom sip"
 echo ""
-echo "☕ Enjoy your tea!"
+echo "☕ Enjoy your virtual coffee!"
