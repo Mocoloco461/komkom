@@ -44,6 +44,22 @@ init_state() {
     "mood": "waiting"
 }
 JSON
+    else
+        # Migrate old tea_count to coffee_count for backward compatibility
+        if grep -q "daily_tea_count" "$STATE_FILE" 2>/dev/null; then
+            python3 -c "
+import json
+try:
+    with open('$STATE_FILE', 'r') as f:
+        data = json.load(f)
+    if 'daily_tea_count' in data:
+        data['daily_coffee_count'] = data.pop('daily_tea_count')
+        with open('$STATE_FILE', 'w') as f:
+            json.dump(data, f, indent=2)
+except:
+    pass
+" 2>/dev/null || true
+        fi
     fi
 }
 
@@ -328,8 +344,8 @@ main() {
                     ;;
                 "bathtub")
                     echo -e "\033[1;31m🚫 Management has decided to suspend you temporarily.\033[0m"
-                    echo "Reason: Attempted coffee pouring into bathtub."
-                    echo "Coffee is precious, don't waste it!"
+                    echo -e "\033[1;31mReason: Attempted coffee pouring into bathtub.\033[0m"
+                    echo -e "\033[1;31mCoffee is precious, don't waste it!\033[0m"
                     exit 1
                     ;;
                 *)

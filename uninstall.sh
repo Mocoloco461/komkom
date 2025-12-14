@@ -12,8 +12,9 @@ CONFIG_DIR="$HOME/.komkom"
 echo "🗑️  Starting Komkom uninstallation..."
 
 # Check permissions
-if [[ $EUID -eq 0 ]]; then
+if [[ "$EUID" -eq 0 ]]; then
     echo "❌ Don't run this script as root"
+    echo "   This script uses sudo only when necessary to remove system files."
     exit 1
 fi
 
